@@ -251,6 +251,7 @@ localStorage.setItem('actorRoles', 'viewer');
 3. 配置表只保存 `secretRefId`、`maskedTail`、`configured` 和更新时间。
 4. 接口、前端页面、日志、审计和导出不返回明文，只显示“已配置”和末四位。
 5. 生产环境通过 `CREDENTIAL_VAULT_KEY` 或受保护的密钥文件提供主密钥。
+6. 未配置 `storage.secretRef` 时，开发环境使用进程级随机签名密钥；进程重启后旧下载签名会失效，生产环境应配置持久凭据。
 
 ### 不要提交
 

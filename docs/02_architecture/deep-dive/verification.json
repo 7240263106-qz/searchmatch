@@ -1,0 +1,220 @@
+{
+  "generatedAt": "2026-11-17T16:07:35.783Z",
+  "userTimezone": "Asia/Shanghai",
+  "scope": "Local static source/document review plus isolated pure functions; no credentials, network, database or full test suite.",
+  "runtime": "v24.16.0",
+  "command": "node --experimental-strip-types docs/02_architecture/deep-dive/verify.mjs",
+  "linkCheck": {
+    "markdownFiles": 5,
+    "checkedLinks": 79,
+    "broken": []
+  },
+  "sourceBaseline": [
+    {
+      "path": "apps/api/prisma/schema.prisma",
+      "sha256": "cdd6d072388fa644192bd7ebcf661ad72c9adb2a8f25463154e3e18f3d23ff97"
+    },
+    {
+      "path": "apps/api/src/app.module.ts",
+      "sha256": "6a3e47b7653f5cc52dc0e9a1352ea626663122b38f91e36b7ae2ffa37d9af7bd"
+    },
+    {
+      "path": "apps/api/src/config/config-resolver.service.ts",
+      "sha256": "bed029caa5b049e8731ff5b18a2d3d91a4263aee873a3dcdf7edf94109ad9ac7"
+    },
+    {
+      "path": "apps/api/src/config/config.service.ts",
+      "sha256": "a00f1cd5c5dd62e661c38050d5fbbf431196f55b1c16c1165cdd80730c6380c5"
+    },
+    {
+      "path": "apps/api/src/config/credential-vault.service.ts",
+      "sha256": "34e5dcba6028374e2b2ef3f25249b8df8df694f982a663ffe44c54c7ea0892e1"
+    },
+    {
+      "path": "apps/api/src/config/model-completion.ts",
+      "sha256": "e3a19b391078419a37180de7b593d9ac4bac146159e3d45e897b92191ec48c97"
+    },
+    {
+      "path": "apps/api/src/controllers/agent.controller.ts",
+      "sha256": "3b1cc3b0e1562c507b6acd1c14dc7a9086315317137d80d799bef35f81f8f49e"
+    },
+    {
+      "path": "apps/api/src/controllers/competitions.controller.ts",
+      "sha256": "ff5d6fea3dc81c69ced0c3eed3ae36a24db4b39f2304de02bc5048f0daa5990e"
+    },
+    {
+      "path": "apps/api/src/domain/competition-discovery.ts",
+      "sha256": "ff77a6f04b3599d6278022095a65e4194790ab22f8f5bc1037b73d50cd7398cc"
+    },
+    {
+      "path": "apps/api/src/domain/document-catalog.test.ts",
+      "sha256": "734e157b6c799a19b6e1a1c36aa070cd840c0d55248090df891c1f5ce6025dbe"
+    },
+    {
+      "path": "apps/api/src/domain/document-catalog.ts",
+      "sha256": "dbc3cc46600a2974894a79c99c4b5febb39a66eb7340993e09a132ba9e215433"
+    },
+    {
+      "path": "apps/api/src/domain/file-security.ts",
+      "sha256": "74554e9a287ece5dba8e58a20fdbdc767bb868b840b89203fe63a73a2be0c623"
+    },
+    {
+      "path": "apps/api/src/domain/fixtures/recognition-catalog.txt",
+      "sha256": "e82070c1d5af178754ee56b07067e97cb1b89ff9a1626f1f9dfc6a165d1fda70"
+    },
+    {
+      "path": "apps/api/src/domain/publish-state-machine.ts",
+      "sha256": "da5e061351ea1165d02caad2ea46dde92f2b54821e89e8418248fddc9a15557f"
+    },
+    {
+      "path": "apps/api/src/domain/quality.ts",
+      "sha256": "7cdce46df18c80b99bd8092f4d2d1539153251e8f3caf88a51298076d370a2cf"
+    },
+    {
+      "path": "apps/api/src/domain/rule-extractor.ts",
+      "sha256": "343d020065a9add3ad2e585c137d8586576c97dd3c2fbb4acea154ec70a56b7e"
+    },
+    {
+      "path": "apps/api/src/domain/time.ts",
+      "sha256": "47b349a3e1bc51e244f292a82210fd58842562497a2220b9eb151448515bd2e3"
+    },
+    {
+      "path": "apps/api/src/main.ts",
+      "sha256": "004683417a0e66a680540b6e5250bc366228232e0594aeaf915ca2ff471e359d"
+    },
+    {
+      "path": "apps/api/src/platform/audit.module.ts",
+      "sha256": "de58fb99bca09d337021e63217e33ddd049ecf3b90600371008291f17d9b951c"
+    },
+    {
+      "path": "apps/api/src/platform/auth.module.ts",
+      "sha256": "3d3506c96ff0b2fe3ab6f383c23312e7166e2ce6e8b8898f5efe144b2e4cf1ce"
+    },
+    {
+      "path": "apps/api/src/platform/discovery-browser.ts",
+      "sha256": "7d0ef23f165ea234e405253dc621108b01784fe053edbf92acda10bcb8a20c86"
+    },
+    {
+      "path": "apps/api/src/platform/rate-limiter.service.ts",
+      "sha256": "8262d5b1af92e71b3cf531f6383da7c94d84102baa712d5d9451b13bf9c48b1b"
+    },
+    {
+      "path": "apps/api/src/platform/safe-fetch.ts",
+      "sha256": "baabb404b907fbfc4d44c80190b933eae0c030af9add17677df9e96dea1c77c4"
+    },
+    {
+      "path": "apps/api/src/platform/storage.module.ts",
+      "sha256": "83e278145ca8e921d83702c776e80becdc3497e623aa4a32b8cd6bde14f0d699"
+    },
+    {
+      "path": "apps/api/src/services/agent.service.ts",
+      "sha256": "5074cf2d6dde2e081d5ba5432358fdec6934319b81cc6c51ce30811bc8fceaad"
+    },
+    {
+      "path": "apps/api/src/services/competition-discovery.service.ts",
+      "sha256": "5bdc9ccfb8970c308e0a969517f9527cd6e59c7af85d45a754a1b70a83b57d59"
+    },
+    {
+      "path": "apps/api/src/services/competition.service.ts",
+      "sha256": "724f628a9fcd8c16623e368f94b6fc43eb41ce3d29531dde3c73a2bb71aa2f8e"
+    },
+    {
+      "path": "apps/api/src/services/crawler.service.ts",
+      "sha256": "13a1e74f5c5616aa6761d6bbf3bc67f0495f175cb7bebd1c2caef053366c79d7"
+    },
+    {
+      "path": "apps/api/src/services/document.service.ts",
+      "sha256": "392c15b2fc98e85abe6439cf3ffcf5ed073e8462ed5411828445d84ebbe21e9c"
+    },
+    {
+      "path": "apps/api/src/services/extraction.service.ts",
+      "sha256": "9f7b979947fd6746f5b1f886b519b3c136948b8954801c4fbfa57ccb0921f778"
+    },
+    {
+      "path": "apps/api/src/services/llm.service.ts",
+      "sha256": "8805dfc5f08f538ffcbda7f171bacf9c3618c14bfeb68d0c260734c1b24b2ba8"
+    },
+    {
+      "path": "apps/api/src/services/parse.service.ts",
+      "sha256": "9af77e6cbc1aa03902668d65c6008fff963218de72595477d5cb5f158ae86180"
+    },
+    {
+      "path": "apps/api/src/services/parser-client.service.ts",
+      "sha256": "a973f9e09c863f203d96e0121c64c8e6df953a778a58eeeccde30e94b59bfe80"
+    },
+    {
+      "path": "apps/api/src/services/track-split.service.ts",
+      "sha256": "e972f89656ded93385b89380823af642e259867e03260f58ce5f078012d3a9ff"
+    },
+    {
+      "path": "apps/api/src/services/verification.service.ts",
+      "sha256": "867c72967e82bbc1a9334d422c12d2dc4a2d4ce64ad20a0eedeeb9afd5c39d00"
+    },
+    {
+      "path": "apps/parser/app/main.py",
+      "sha256": "a6c9b076d8e26601294980b5e03fb0da1a6fc503ec48f7a64d091316ce817017"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "sha256": "1fcffd4a22ad855e16bf5728068f191fb3dba39b95bb3c44d34c4268a445c94e"
+    },
+    {
+      "path": "apps/web/src/components/AgentDiscovery.tsx",
+      "sha256": "3e524132dc1975f0388ba4dbccebc0c97572194e3917937570beccfd25b96c07"
+    },
+    {
+      "path": "apps/web/src/lib/api.ts",
+      "sha256": "5971184a8cbcdd52a767c38dcb4b5f9a805f677572fd737bf2ed06a774287481"
+    },
+    {
+      "path": "apps/web/src/pages/DocumentsPage.tsx",
+      "sha256": "a5e68eec8fc0a5b3c42bca775feee31451f37845bb25f3da9b4b3ad419848a98"
+    },
+    {
+      "path": "apps/web/src/pages/SearchPage.tsx",
+      "sha256": "60c840707f7bbcb075a98664c0baa1a65643234f357fa9adfd875bcfcbddd657"
+    }
+  ],
+  "probes": [
+    {
+      "id": "catalog_fixture",
+      "expected": 71,
+      "observed": 71,
+      "verified": true,
+      "gradeCounts": {
+        "A类": 5,
+        "B类": 14,
+        "C类": 52
+      },
+      "meaning": "Existing fixture rows are preserved by the current pure parser; not an accuracy benchmark."
+    },
+    {
+      "id": "day_precision",
+      "expected": "2026-11-17T15:59:59.000Z",
+      "observed": "2026-11-17T15:59:59.000Z",
+      "verified": true
+    },
+    {
+      "id": "future_start_boundary",
+      "expectedCurrentBehavior": "closing_soon",
+      "observed": "closing_soon",
+      "verified": true,
+      "issue": "Current branch order labels a future-start stage as closing soon; proposed rule is not_started."
+    },
+    {
+      "id": "invalid_calendar_date",
+      "expectedCurrentBehavior": "2026-03-01T16:00:00.000Z",
+      "observed": "2026-03-01T16:00:00.000Z",
+      "verified": true,
+      "issue": "February 30 is normalized into March rather than rejected."
+    }
+  ],
+  "historicalResults": {
+    "source": "DEPLOYMENT_STATUS.md, 2026-11-17",
+    "rerunThisSession": false,
+    "recordedApiTests": 141,
+    "recordedHttpsChecks": 26,
+    "recordedParserChecks": 6
+  },
+  "complete": true
+}

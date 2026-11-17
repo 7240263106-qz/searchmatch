@@ -1,0 +1,803 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 本地演示使用 SQLite；生产切换 PostgreSQL 16 时仅需改 provider 并替换迁移。
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model CompetitionSeries {
+  id             String   @id @default(cuid())
+  name           String
+  normalizedName String   @unique
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  editions       CompetitionEdition[]
+  competitions   Competition[]
+}
+
+model CompetitionEdition {
+  id        String   @id @default(cuid())
+  seriesId  String
+  ordinal   Int
+  year      Int
+  name      String
+  createdAt DateTime @default(now())
+  series    CompetitionSeries @relation(fields: [seriesId], references: [id])
+  tracks    CompetitionTrack[]
+  competitions Competition[]
+
+  @@unique([seriesId, ordinal, year])
+}
+
+model CompetitionTrack {
+  id          String   @id @default(cuid())
+  editionId   String
+  name        String
+  normalizedName String
+  createdAt   DateTime @default(now())
+  edition     CompetitionEdition @relation(fields: [editionId], references: [id])
+  competitions Competition[]
+
+  @@unique([editionId, normalizedName])
+}
+
+model Organizer {
+  id             String   @id @default(cuid())
+  name           String
+  normalizedName String   @unique
+  level          String?
+  officialSite   String?
+  createdAt      DateTime @default(now())
+  competitions   CompetitionOrganizer[]
+}
+
+model CompetitionOrganizer {
+  id            String @id @default(cuid())
+  competitionId String
+  organizerId   String
+  role          String @default("host")
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  organizer     Organizer @relation(fields: [organizerId], references: [id])
+
+  @@unique([competitionId, organizerId, role])
+}
+
+model Competition {
+  id                    String    @id @default(cuid())
+  name                  String
+  normalizedName        String
+  seriesId              String?
+  editionId             String?
+  trackId               String?
+  description           String?
+  category              String?
+  level                 String?
+  organizerLevel        String?
+  scope                 String?
+  schoolRecognitionLevel String?
+  publishStatus         String    @default("draft")
+  completeness          String    @default("partial")
+  registrationStatus    String    @default("undetermined")
+  credibility           String    @default("pending")
+  credibilityScore      Int       @default(0)
+  credibilityBasis      String?
+  siteStatus            String    @default("unverified")
+  signupMethod          String    @default("to_be_announced")
+  signupUrl             String?
+  signupNote            String?
+  signupContact         String?
+  eligibilityJson       String    @default("{}")
+  scheduleNote          String?
+  awards                String?
+  nearestDeadline       DateTime?
+  versionNo             Int       @default(1)
+  publishedAt           DateTime?
+  deletedAt             DateTime?
+  groupId               String?
+  parentId              String?
+  parent                Competition? @relation("CompetitionHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children              Competition[] @relation("CompetitionHierarchy")
+  dataOrigin            String    @default("formal")
+  verificationBatchId   String?
+  demoFlag              Boolean   @default(false)
+  fourElementKey        String?
+  createdBy             String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  series                CompetitionSeries?  @relation(fields: [seriesId], references: [id])
+  edition               CompetitionEdition? @relation(fields: [editionId], references: [id])
+  track                 CompetitionTrack?   @relation(fields: [trackId], references: [id])
+  stages                RegistrationStage[]
+  entries               SignupEntry[]
+  sources               SourceMaterial[]
+  fieldEvidence         FieldEvidence[]
+  reviews               ReviewRecord[]
+  versions              CompetitionVersion[]
+  changeEvents          ChangeEvent[]
+  organizers            CompetitionOrganizer[]
+  documentLinks         DocumentCompetitionLink[]
+
+  @@index([publishStatus, registrationStatus])
+  @@index([nearestDeadline])
+  @@index([parentId])
+  @@index([category])
+  @@index([level])
+  @@index([normalizedName])
+}
+
+model RegistrationStage {
+  id             String    @id @default(cuid())
+  competitionId  String
+  name           String
+  stageType      String    @default("official")
+  startAt        DateTime?
+  startPrecision String    @default("unknown")
+  startTimezone  String?
+  startRawText   String?
+  endAt          DateTime?
+  endPrecision   String    @default("unknown")
+  endTimezone    String?
+  endRawText     String?
+  applicableTo   String?
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  competition    Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@index([competitionId, sortOrder])
+}
+
+model SignupEntry {
+  id              String    @id @default(cuid())
+  competitionId   String
+  type            String    @default("official")
+  url             String?
+  method          String    @default("web")
+  status          String    @default("unverified")
+  note            String?
+  contact         String?
+  lastCheckedAt   DateTime?
+  trustedDomain   Boolean   @default(false)
+  internalReason  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  competition     Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@index([competitionId, type])
+}
+
+model SourceMaterial {
+  id            String    @id @default(cuid())
+  competitionId String?
+  documentId    String?
+  type          String    @default("manual")
+  title         String
+  url           String?
+  capturedAt    DateTime  @default(now())
+  ownerId       String?
+  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+
+  @@index([competitionId])
+}
+
+model CompetitionDocument {
+  id              String    @id @default(cuid())
+  fileName        String
+  mimeType        String
+  detectedType    String    @default("unknown")
+  size            Int
+  fingerprint     String
+  storageKey      String
+  ownerKind       String    @default("personal")
+  ownerId         String
+  status          String    @default("stored")
+  parseStatus     String    @default("queued")
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  links           DocumentCompetitionLink[]
+  parseTasks      ParseTask[]
+  resultVersions  ParseResultVersion[]
+
+  @@unique([ownerKind, ownerId, fingerprint])
+  @@index([ownerId])
+}
+
+model DocumentCompetitionLink {
+  id             String   @id @default(cuid())
+  documentId     String
+  competitionId  String
+  locationNote   String?
+  createdAt      DateTime @default(now())
+  document       CompetitionDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  competition    Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, competitionId])
+}
+
+model ParseTask {
+  id             String    @id @default(cuid())
+  documentId     String
+  status         String    @default("queued")
+  stage          String?
+  progress       Int       @default(0)
+  errorCode      String?
+  errorMessage   String?
+  attempts       Int       @default(0)
+  idempotencyKey String?   @unique
+  traceJson      String    @default("{}")
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  document       CompetitionDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  resultVersions ParseResultVersion[]
+
+  @@index([documentId, status])
+}
+
+model ParseResultVersion {
+  id            String    @id @default(cuid())
+  documentId    String
+  taskId        String?
+  versionNo     Int
+  modelVersion  String    @default("rule-v1")
+  configVersion String    @default("parse-config-v1")
+  resultJson    String    @default("{}")
+  adopted       Boolean   @default(false)
+  adoptedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  document      CompetitionDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  task          ParseTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@unique([documentId, versionNo])
+}
+
+model FieldEvidence {
+  id                String   @id @default(cuid())
+  competitionId     String
+  fieldName         String
+  fieldValue        String?
+  sourceId          String?
+  sourceTitle       String?
+  snippet           String?
+  locationJson      String?
+  extractMethod     String   @default("rule")
+  confidence        String   @default("medium")
+  fieldState        String   @default("explicit")
+  manuallyCorrected Boolean  @default(false)
+  parseVersionId    String?
+  createdAt         DateTime @default(now())
+  competition       Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@index([competitionId, fieldName])
+}
+
+model ReviewRecord {
+  id            String   @id @default(cuid())
+  competitionId String
+  action        String
+  reviewer      String
+  comment       String?
+  createdAt     DateTime @default(now())
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@index([competitionId])
+}
+
+model CompetitionVersion {
+  id            String   @id @default(cuid())
+  competitionId String
+  versionNo     Int
+  changesJson   String   @default("[]")
+  actor         String
+  reason        String?
+  createdAt     DateTime @default(now())
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@unique([competitionId, versionNo])
+}
+
+model ChangeEvent {
+  id            String   @id @default(cuid())
+  competitionId String
+  type          String
+  field         String?
+  beforeValue   String?
+  afterValue    String?
+  detectedAt    DateTime @default(now())
+  notified      Boolean  @default(false)
+  competition   Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@index([competitionId])
+}
+
+model Draft {
+  id             String   @id @default(cuid())
+  ownerId        String
+  title          String?
+  payloadJson    String   @default("{}")
+  documentIdsJson String  @default("[]")
+  version        Int      @default(1)
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model SourceDefinition {
+  id                 String    @id @default(cuid())
+  name               String
+  address            String
+  normalizedAddress  String
+  type               String    @default("official_site")
+  ownerKind          String    @default("personal")
+  ownerId            String
+  intervalSeconds    Int       @default(86400)
+  enabled            Boolean   @default(false)
+  verified           Boolean   @default(false)
+  lastSuccessAt      DateTime?
+  consecutiveFailures Int      @default(0)
+  structureSuspect   Boolean   @default(false)
+  whitelist          Boolean   @default(false)
+  whitelistConfirmedBy String?
+  whitelistConfirmedAt DateTime?
+  dataOrigin         String    @default("formal")
+  attachmentEnabled  Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([ownerKind, ownerId, normalizedAddress])
+}
+
+model AgentSession {
+  id        String   @id @default(cuid())
+  ownerId   String
+  createdAt DateTime @default(now())
+  turns     AgentTurn[]
+}
+
+model AgentTurn {
+  id             String   @id @default(cuid())
+  sessionId      String
+  ownerId        String
+  rawIntent      String
+  parsedConditions String?
+  answerText     String?
+  conclusionType String   @default("explanation")
+  degraded       Boolean  @default(false)
+  actionJson     String?
+  confirmed      Boolean?
+  executed       Boolean?
+  createdAt      DateTime @default(now())
+  session        AgentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  id            String   @id @default(cuid())
+  userId        String
+  competitionId String
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, competitionId])
+}
+
+model AuditEntry {
+  id         String   @id @default(cuid())
+  actorId    String
+  action     String
+  objectType String
+  objectId   String
+  detailJson String?
+  prevHash   String?
+  hash       String
+  createdAt  DateTime @default(now())
+
+  @@index([objectType, objectId])
+  @@index([actorId, createdAt])
+}
+
+model OutboxEvent {
+  id          String    @id @default(cuid())
+  eventType   String
+  objectType  String
+  objectId    String
+  payloadJson String    @default("{}")
+  status      String    @default("pending")
+  attempts    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  deliveredAt DateTime?
+
+  @@index([status, createdAt])
+}
+
+model IdempotencyRecord {
+  key         String   @id
+  scope       String
+  resultJson  String?
+  status      String   @default("processing")
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+}
+
+model DeadLetterTask {
+  id          String   @id @default(cuid())
+  taskType    String
+  taskId      String
+  reason      String
+  payloadJson String   @default("{}")
+  createdAt   DateTime @default(now())
+  replayed    Boolean  @default(false)
+}
+
+model SubscriptionRule {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  conditionsJson String @default("{}")
+  frequency   String   @default("realtime")
+  createdAt   DateTime @default(now())
+}
+
+model PushBatch {
+  id          String   @id @default(cuid())
+  batchNo     String
+  channel     String
+  templateVersion String @default("v1")
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  items       PushItem[]
+}
+
+model PushItem {
+  id            String   @id @default(cuid())
+  batchId       String
+  competitionId String
+  result        String   @default("pending")
+  failureReason String?
+  batch         PushBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+}
+
+model CrawlTask {
+  id          String    @id @default(cuid())
+  sourceId    String
+  batchId     String?
+  triggerType String    @default("manual")
+  status      String    @default("queued")
+  stage       String?
+  cursor      String?
+  countersJson String   @default("{}")
+  emptyReason String?
+  errorMessage String?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([sourceId, status])
+}
+
+model Candidate {
+  id             String   @id @default(cuid())
+  sourceId       String
+  taskId         String?
+  batchId        String?
+  snapshotId     String?
+  title          String
+  url            String?
+  fingerprint    String
+  rawJson        String   @default("{}")
+  status         String   @default("pending")
+  processingMode String?
+  filterReason   String?
+  createdAt      DateTime @default(now())
+
+  @@index([sourceId, status])
+  @@index([batchId])
+}
+
+model VerificationBatch {
+  id           String    @id @default(cuid())
+  name         String
+  subject      String
+  clientKey    String?   @unique
+  status       String    @default("created")
+  dataOrigin   String    @default("verification")
+  sourceId     String?
+  entryLimit   Int       @default(50)
+  reportJson   String    @default("{}")
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  promotedAt   DateTime?
+  clearedAt    DateTime?
+  createdBy    String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model RequestEvidence {
+  id                String   @id @default(cuid())
+  taskId            String?
+  sourceId          String?
+  batchId           String?
+  url               String
+  finalUrl          String?
+  redirectChainJson String    @default("[]")
+  status            Int
+  bytes             Int
+  fingerprint       String
+  fetchedAt         DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model RawPageSnapshot {
+  id           String    @id @default(cuid())
+  evidenceId   String    @unique
+  sourceId     String?
+  taskId       String?
+  batchId      String?
+  pageKind     String
+  url          String
+  finalUrl     String
+  storageKey   String
+  fingerprint  String
+  bytes        Int
+  contentType  String?
+  status       String    @default("available")
+  parseStatus  String    @default("pending")
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+
+  @@index([taskId, pageKind])
+  @@index([batchId])
+}
+
+model CrawlAttachment {
+  id             String   @id @default(cuid())
+  snapshotId     String?
+  sourceId       String?
+  taskId         String?
+  batchId        String?
+  parentUrl      String
+  url            String
+  fileName       String
+  storageKey     String?
+  fingerprint    String?
+  bytes          Int      @default(0)
+  securityStatus String   @default("pending")
+  securityReason String?
+  parseTaskId    String?
+  createdAt      DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model ProcessingCheckpoint {
+  id               String   @id @default(cuid())
+  taskId           String
+  scopeType        String
+  scopeId          String
+  stage            String
+  inputFingerprint String?
+  configHash       String?
+  status           String   @default("pending")
+  attempt          Int      @default(0)
+  resultRef        String?
+  errorCode        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([taskId, scopeType, scopeId, stage])
+}
+
+model CompetitionGroup {
+  id             String   @id @default(cuid())
+  trackId        String
+  name           String
+  normalizedName String
+  createdAt      DateTime @default(now())
+
+  @@unique([trackId, normalizedName])
+}
+
+model TrackSplitRecord {
+  id              String   @id @default(cuid())
+  candidateId     String?
+  batchId         String?
+  resultVersionId String?
+  planJson        String
+  fingerprint     String   @unique
+  status          String   @default("committed")
+  createdBy       String
+  createdAt       DateTime @default(now())
+}
+
+model ModelProviderConfig {
+  id         String   @id @default(cuid())
+  name       String
+  baseUrl    String
+  secretRef  String
+  model      String
+  enabled    Boolean  @default(true)
+  timeoutMs  Int      @default(30000)
+  version    Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ModelCallRecord {
+  id            String   @id @default(cuid())
+  taskType      String
+  providerId    String?
+  model         String
+  configVersion Int      @default(1)
+  promptVersion String   @default("v1")
+  attemptId     String   @unique
+  durationMs    Int      @default(0)
+  inputTokens   Int?
+  outputTokens  Int?
+  cost          Float?
+  costUnknown   Boolean  @default(true)
+  degraded      Boolean  @default(false)
+  degradeReason String?
+  success       Boolean  @default(false)
+  relatedType   String?
+  relatedId     String?
+  createdAt     DateTime @default(now())
+
+  @@index([taskType, createdAt])
+}
+
+model OnboardingState {
+  id             String   @id @default(cuid())
+  ownerId        String   @unique
+  currentStep    String   @default("source")
+  completedJson  String   @default("[]")
+  skipped        Boolean  @default(false)
+  crawlEnabled   Boolean  @default(false)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+}
+model ConfigItemDefinition {
+  id                String   @id @default(cuid())
+  key               String   @unique
+  group             String
+  label             String
+  description       String   @default("")
+  dataType          String
+  enumValuesJson    String   @default("[]")
+  minValue          Float?
+  maxValue          Float?
+  required          Boolean  @default(false)
+  scope             String
+  applyMode         String
+  definitionVersion Int      @default(1)
+  defaultValueJson  String?
+  unit              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([group])
+}
+
+model SystemConfigVersion {
+  id           String   @id @default(cuid())
+  version      Int      @unique
+  baseVersion  Int?
+  actorId      String
+  actorRole    String?
+  reason       String?
+  applyState   String   @default("applied")
+  changeCount  Int      @default(0)
+  rollbackable Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model SystemConfigValue {
+  id          String   @id @default(cuid())
+  versionNo   Int
+  key         String
+  group       String
+  scope       String
+  valueJson   String?
+  secretRefId String?
+  maskedTail  String?
+  configured  Boolean  @default(false)
+  source      String
+  createdAt   DateTime @default(now())
+
+  @@unique([versionNo, key, scope])
+  @@index([key, scope])
+}
+
+model ConfigChangeRecord {
+  id              String   @id @default(cuid())
+  versionNo       Int
+  key             String
+  group           String
+  scope           String
+  beforeValueJson String?
+  afterValueJson  String?
+  applyMode       String
+  result          String   @default("success")
+  failedReason    String?
+  sourceAddress   String?
+  actorId         String
+  createdAt       DateTime @default(now())
+
+  @@index([versionNo])
+  @@index([group, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model ConfigRollbackRecord {
+  id                String   @id @default(cuid())
+  sourceVersion     Int
+  targetVersion     Int
+  resultVersion     Int?
+  resultsJson       String   @default("[]")
+  failureJson       String?
+  actorId           String
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model ConfigApplyState {
+  id                 String   @id @default(cuid())
+  key                String   @unique
+  group              String
+  versionNo          Int
+  savedValueJson     String?
+  runtimeValueJson   String?
+  applyState         String   @default("applied")
+  pendingRestartAt   DateTime?
+  runtimeMismatch    Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
+
+  @@index([applyState])
+}
+
+model ConfigTestRecord {
+  id            String   @id @default(cuid())
+  targetType    String
+  maskedAddress String
+  teamId        String?
+  startedAt     DateTime @default(now())
+  durationMs    Int      @default(0)
+  resultCode    String
+  failureReason String?
+  actorId       String
+  createdAt     DateTime @default(now())
+
+  @@index([targetType, createdAt])
+}
+
+model ConfigReadinessSnapshot {
+  id         String   @id @default(cuid())
+  overall    String
+  itemsJson  String   @default("[]")
+  computedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([computedAt])
+}
+
+model CredentialRef {
+  id            String   @id @default(cuid())
+  purpose       String
+  maskedTail    String
+  status        String   @default("active")
+  lastUpdatedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([purpose, status])
+}

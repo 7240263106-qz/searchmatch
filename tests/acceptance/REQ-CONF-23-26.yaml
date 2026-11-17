@@ -1,0 +1,103 @@
+# 配置中心增量验收（REQ-CONF-23～26）
+# 执行环境：本地 SQLite + dev 身份 + 实际启动 API（127.0.0.1:3000）
+# 状态：verified=已实测且证据齐全；partial=实现/主路径实测但有受限缺口；blocked=缺环境未验
+requirement_range: REQ-CONF-23..26
+verified_at: 2026-11-08
+environment:
+  api: http://127.0.0.1:3000/api/v1
+  database: SQLite prisma/dev.db
+  profile: dev
+  network: 执行沙箱禁网；仅本机回环可测
+
+cases:
+  - id: CONF-23
+    requirement: REQ-CONF-23
+    scenario: 前端 API 基地址运行期下发
+    expected: 下发接口返回地址/来源/版本/缓存上限；ETag 304；未加载 503；失败同源兜底并告警
+    status: partial
+    verified:
+      - GET /system/client-bootstrap 200，返回 configured 地址与 60 秒缓存
+      - If-None-Match 命中 304
+      - viewer 可读、无配置键名/凭据/内部地址
+      - 下发记录写入 artifacts/config-gate/client-bootstrap-log.jsonl
+    blocked:
+      - 真实浏览器断网/503/超时三种条件与缓存过期重校验未实测（无 Playwright 浏览器）
+    evidence:
+      - artifacts/config-gate/client-bootstrap-log.jsonl
+      - artifacts/config-gate/summary-report.json
+  - id: CONF-24
+    requirement: REQ-CONF-24
+    scenario: 配置类环境变量静态扫描门禁
+    expected: 三类白名单外命中 0；违规/同源不一致阻断构建；报告管理员可读
+    status: partial
+    verified:
+      - pnpm gate:env 扫描 82 文件 / 16873 行，违规 0
+      - 同源运行期断言通过（页面/健康/下发 v14、指纹一致）
+      - gate:selfcheck 3/3 类违规被阻断（普通 env、动态键、同源不一致）
+      - 报告接口 admin 200、viewer 403、无报告 404
+    blocked:
+      - 扫描超时分支未构造真实超时
+      - 新增配置项未登记读取入口未构造（本轮未新增配置项）
+    evidence:
+      - artifacts/config-gate/last-report.json
+      - artifacts/config-gate/same-source-runtime.json
+      - artifacts/config-gate/gate-selfcheck.json
+  - id: CONF-25
+    requirement: REQ-CONF-25
+    scenario: 数据存储配置驱动运行期连接
+    expected: 存储配置进入运行期连接/读写；未启用不切换；历史原件逐项标注可用性
+    status: partial
+    verified:
+      - S3 兼容适配器 + LocalBlobStore 实现，8 项单测通过
+      - 远端凭据缺失/格式错误不建连接并降级本地
+      - 历史原件 availability 派生与不可访问原因，4 项单测通过
+      - 数据存储页返回脱敏运行期连接来源
+    blocked:
+      - PostgreSQL 库名切换、TLS 强制、真实凭据轮换（本机 SQLite）
+      - MinIO/S3 真桶切换与历史原件真实迁移（无远端存储）
+    evidence:
+      - artifacts/config-gate/network-report.json
+      - artifacts/config-gate/summary-report.json
+  - id: CONF-26
+    requirement: REQ-CONF-26
+    scenario: 真实联网与并发专项验证
+    expected: 五类目标真实外发记录；六类并发场景满足版本单调与唯一写事务
+    status: partial
+    verified:
+      - 并发：同目标 10 并发仅 1 次外发 + 9 次 429
+      - 并发：两名管理员保存 1 成功 + 1 个 409
+      - 并发：保存与回滚 1 成功 + 1 个 409，版本 12→13→14 单调
+      - 并发：凭据写入 2 个不同引用、明文 0 次、撤销 200
+      - 并发：就绪重算 10 并发同一 computedAt
+      - 网络：Python 解析与对外基地址真实外发并按失败分类记录
+    partial:
+      - 数据库为受控驱动查询（SQLite）
+      - 对象存储为本地替代验证
+      - 模型服务未配置，按失败分类记录
+    blocked:
+      - 采集运行中修改配置（无进行中任务与编排入口）
+      - 多实例共享冷却
+    evidence:
+      - artifacts/config-gate/concurrency-report.json
+      - artifacts/config-gate/network-report.json
+      - artifacts/config-gate/summary-report.json
+
+exception_codes:
+  - code: CONF_CLIENT_BOOTSTRAP_UNAVAILABLE
+    status: verified
+  - code: CONF_GATE_REPORT_MISSING
+    status: verified
+  - code: RATE_LIMITED
+    status: verified
+  - code: CONF_VERSION_CONFLICT
+    status: verified
+  - code: CONF_PERSIST_FAILED
+    status: verified
+
+overall:
+  status: partial
+  verified: 3
+  partial: 3
+  blocked: 3
+  failed: 0
+  note: 存在真实网络、远端对象存储、PostgreSQL 与浏览器缺口，不得输出“全部通过”。

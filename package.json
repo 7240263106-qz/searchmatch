@@ -1,0 +1,35 @@
+{
+  "name": "competition-sj",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  },
+  "scripts": {
+    "gate:env": "node scripts/check-env-usage.mjs",
+    "gate:selfcheck": "node scripts/config-gate-selfcheck.mjs",
+    "check:same-source": "node scripts/check-config-same-source.mjs",
+    "check:config-network": "node scripts/config-network-check.mjs",
+    "check:config-concurrency": "node scripts/config-concurrency-check.mjs",
+    "verify:config": "node scripts/config-verify-report.mjs",
+    "build": "pnpm gate:env && pnpm --filter @competition/contracts build && pnpm --filter @competition/api build && pnpm --filter @competition/web build",
+    "dev": "pnpm --parallel --filter @competition/api --filter @competition/web dev",
+    "dev:api": "pnpm --filter @competition/api dev",
+    "dev:web": "pnpm --filter @competition/web dev",
+    "dev:parser": "python -m uvicorn app.main:app --reload --port 8000",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:push": "pnpm --filter @competition/api db:push",
+    "db:seed": "pnpm --filter @competition/api db:seed",
+    "start": "pnpm --filter @competition/api start"
+  }
+}

@@ -1,0 +1,20 @@
+[project]
+name = "competition-parser"
+version = "0.1.0"
+description = "竞赛文档解析服务（PDF / Word / Excel / CSV / 文本 / 扫描件）"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "pymupdf>=1.24",
+  "python-docx>=1.1",
+  "openpyxl>=3.1",
+  "pydantic>=2.9",
+]
+
+[project.optional-dependencies]
+ocr = ["paddleocr>=2.9", "paddlepaddle>=2.6"]
+test = ["pytest>=8.3", "httpx>=0.27"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

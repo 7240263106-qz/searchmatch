@@ -1,0 +1,28 @@
+[Unit]
+Description=Competition SJ API
+After=network.target competition-parser.service
+Wants=competition-parser.service
+
+[Service]
+Type=simple
+User=competition-sj
+Group=competition-sj
+WorkingDirectory=/opt/competition-sj/current/apps/api
+Environment=NODE_ENV=production
+Environment=APP_ENV=prod
+Environment=DATABASE_URL=file:/opt/competition-sj/shared/competition.db
+Environment=NODE_OPTIONS=--max-old-space-size=192
+ExecStart=/opt/competition-sj/runtime/node/bin/node dist/main.js
+Restart=on-failure
+RestartSec=5
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/competition-sj/shared
+MemoryMax=384M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

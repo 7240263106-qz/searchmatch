@@ -1,0 +1,175 @@
+# 配置中心验收证据映射（REQ-CONF-01～22 / 6.25.1～15）
+# 执行环境：本地 SQLite + dev 身份，API 实际启动后以 curl 冒烟
+# 状态：verified=已实测；partial=部分场景已实测；blocked=受限环境待补验
+requirement_range: REQ-CONF-01..22
+verified_at: 2026-11-08
+environment:
+  api: http://127.0.0.1:3000 / 3001（待重启项验证后切换）
+  database: SQLite prisma/dev.db
+  profile: dev
+
+cases:
+  - id: CONF-01
+    requirement: REQ-CONF-01
+    scenario: 管理员三次点击内到达模型接入；非管理员不渲染配置字段
+    expected: 导航存在系统设置；viewer 导航不出现、直达路由 403
+    status: verified
+    evidence: SettingsPage + App.tsx 导航过滤；curl viewer=403 CONF_FORBIDDEN
+  - id: CONF-02
+    requirement: REQ-CONF-02
+    scenario: 八分组、双层值与来源标签、强制只读无编辑控件
+    expected: 8 分组齐全；来源显示页面保存值/环境默认值/内置默认值；locked 无编辑
+    status: verified
+    evidence: GET /system-settings 返回 8 组 78 项；config-items 单测
+  - id: CONF-03
+    requirement: REQ-CONF-03
+    scenario: 端口越界、通配来源、file:// 基地址
+    expected: 422 CONF_VALUE_INVALID / CONF_ADDRESS_FORBIDDEN
+    status: verified
+    evidence: 单测 validateValue(server.port=70000)；CORS='*'；checkAddress(file://)
+  - id: CONF-04
+    requirement: REQ-CONF-04
+    scenario: 生产开启开发身份
+    expected: 403 CONF_DEV_IDENTITY_FORBIDDEN 并写安全事件
+    status: verified
+    evidence: 单测 profile=prod；AuthGuard 生产拒绝请求头模拟
+  - id: CONF-05
+    requirement: REQ-CONF-05
+    scenario: 口令写入连接串 / 未测试连接保存为未启用
+    expected: 口令仅以凭据引用保存；浏览器不含地址与密钥
+    status: partial
+    evidence: Vault 只存 secretRefId+末四位；数据库级连接切换尚未接入运行期
+  - id: CONF-06
+    requirement: REQ-CONF-06
+    scenario: 断开解析服务
+    expected: 采集/检索可用，就绪显示降级可用
+    status: verified
+    evidence: POST tests python_parser → unreachable；readiness parser=degraded
+  - id: CONF-07
+    requirement: REQ-CONF-07
+    scenario: 模型接入页面化与凭据缺失不可启用
+    expected: 仅管理员；启用前必须有地址/模型/凭据
+    status: verified
+    evidence: model_access 16 项；validateCrossItems 单测
+  - id: CONF-08
+    requirement: REQ-CONF-08
+    scenario: 采集总开关前置校验
+    expected: 未就绪或无验证源时拒绝 CRAWL_PRECHECK_FAILED
+    status: verified
+    evidence: SystemService.setCrawlEnabled 前置 readiness + verified source
+  - id: CONF-09
+    requirement: REQ-CONF-09
+    scenario: 蓝桥杯渠道地址纳入配置
+    expected: 列表/详情接口与模板可配置，配置内无竞赛条目
+    status: verified
+    evidence: crawler.service 改读 crawl.lanqiao.*；config-items 单测
+  - id: CONF-10
+    requirement: REQ-CONF-10
+    scenario: 留存期限下限与生效口径
+    expected: 少于 30 天拒绝；默认 180 天
+    status: verified
+    evidence: 定义 min=30；单测范围校验
+  - id: CONF-11
+    requirement: REQ-CONF-11
+    scenario: 五项安全开关关闭请求
+    expected: 422 CONF_SECURITY_SWITCH_LOCKED 并记事件
+    status: verified
+    evidence: curl security.ssrfCheck=false → 422；audit 记录
+  - id: CONF-12
+    requirement: REQ-CONF-12
+    scenario: 维护者读取配置
+    expected: 403 CONF_FORBIDDEN 且无键名/分组数量
+    status: verified
+    evidence: curl viewer → 403，响应仅 error.code/message
+  - id: CONF-13
+    requirement: REQ-CONF-13
+    scenario: 密钥脱敏、轮换与删除保护
+    expected: 明文 0 次；只显示末四位；被引用凭据删除返回 CONF_CREDENTIAL_IN_USE
+    status: verified
+    evidence: PUT credentials/new → maskedTail=1234；GET group 无明文；DELETE → 409
+  - id: CONF-14
+    requirement: REQ-CONF-14
+    scenario: 测试连接五类目标与冷却
+    expected: 七类结果；1 分钟冷却；失败不改现网
+    status: verified
+    evidence: database=success；python_parser=unreachable；maskedAddress 脱敏
+  - id: CONF-15
+    requirement: REQ-CONF-15
+    scenario: 版本冲突与整批语义
+    expected: 后提交者 409；5 项含 1 非法整批不提交
+    status: verified
+    evidence: baseVersion=1 重放 → 409；5 项 minUrlIntervalMs=1000 → 422，版本保持 6
+  - id: CONF-16
+    requirement: REQ-CONF-16
+    scenario: 立即生效与需重启
+    expected: server.port 保存后运行值不变、待重启；重启后生效
+    status: verified
+    evidence: effectiveValue=3000/deploymentValue=3001/pending；重启后监听 3001
+  - id: CONF-17
+    requirement: REQ-CONF-17
+    scenario: 回滚生成新版本且不级联业务
+    expected: 回滚成功生成 vN+1；仅真正变化的需重启项标待重启
+    status: verified
+    evidence: rollback v2→v4；rollback v3→v5，pending 仅 server.port
+  - id: CONF-18
+    requirement: REQ-CONF-18
+    scenario: 地址与 SSRF
+    expected: 元数据/内网/链路本地/非 http(s) 拒绝
+    status: verified
+    evidence: 单测 checkAddress 169.254.169.254 / 10.x / 192.168.x / file://
+  - id: CONF-19
+    requirement: REQ-CONF-19
+    scenario: 禁止演示与虚构
+    expected: 配置内无演示入口、无竞赛条目；保存前后业务计数不变
+    status: partial
+    evidence: config-items 单测；业务计数摘要未做自动化比对
+  - id: CONF-20
+    requirement: REQ-CONF-20
+    scenario: 就绪检查与空库联动
+    expected: 模型可选未配置→ready_rule_mode；存储/源未就绪→not_ready；空库首动作 open_system_settings
+    status: verified
+    evidence: GET readiness 六项；empty-state 有数据时不误报；无数据时 actions 首项系统设置
+  - id: CONF-21
+    requirement: REQ-CONF-21
+    scenario: 一致性与硬编码消除
+    expected: 页面/健康检查/运行任务同源快照
+    status: partial
+    evidence: readyz/configuration-health 读同一 resolver；process.env 静态扫描门禁未实现
+  - id: CONF-22
+    requirement: REQ-CONF-22
+    scenario: 逐项校验与部分保存
+    expected: 逐项 violations 含 key/reason/allowedRange；非法整批不保存
+    status: verified
+    evidence: 422 details.violations；版本号未递增
+
+exception_codes:
+  - code: CONF_VALUE_INVALID
+    status: verified
+  - code: CONF_CONNECT_FAILED
+    status: verified
+  - code: CONF_VERSION_CONFLICT
+    status: verified
+  - code: CONF_CREDENTIAL_MISSING
+    status: verified
+  - code: CONF_CREDENTIAL_IN_USE
+    status: verified
+  - code: CONF_RESTART_REQUIRED
+    status: verified
+  - code: CONF_FORBIDDEN
+    status: verified
+  - code: CONF_ADDRESS_FORBIDDEN
+    status: verified
+  - code: CONF_ROLLBACK_FAILED
+    status: verified
+  - code: CONF_DEV_IDENTITY_FORBIDDEN
+    status: verified
+  - code: CONF_APPLY_FAILED
+    status: partial
+  - code: CONF_PERSIST_FAILED
+    status: blocked
+  - code: CONF_SECURITY_SWITCH_LOCKED
+    status: verified
+  - code: CONF_ENV_CONFLICT
+    status: partial
+  - code: CONF_RUNTIME_MISMATCH
+    status: verified

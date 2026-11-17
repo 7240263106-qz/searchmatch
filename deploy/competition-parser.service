@@ -1,0 +1,25 @@
+[Unit]
+Description=Competition SJ document parser
+After=network.target
+
+[Service]
+Type=simple
+User=competition-sj
+Group=competition-sj
+WorkingDirectory=/opt/competition-sj/current/apps/parser
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/competition-sj/runtime/parser-venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8011 --workers 1 --no-access-log
+Restart=on-failure
+RestartSec=5
+UMask=0027
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/competition-sj/shared
+MemoryMax=256M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target
